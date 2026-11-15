@@ -14,6 +14,35 @@ An AI-assisted, learning-oriented Java 17 / Spring Boot 3.5 application scaffold
 - GitHub Actions build-and-test workflow
 - OpenAPI UI dependency
 
+
+## Document metadata API
+
+The first domain milestone implements metadata CRUD at `/api/documents`. It does not upload or download binary files yet; file fields are descriptive metadata only.
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/documents` | Create document metadata |
+| GET | `/api/documents` | List documents, newest first |
+| GET | `/api/documents/{id}` | Retrieve one document |
+| PUT | `/api/documents/{id}` | Replace document metadata |
+| DELETE | `/api/documents/{id}` | Delete document metadata |
+
+Example request:
+
+```json
+{
+  "title": "Architecture Guide",
+  "description": "Initial system architecture",
+  "fileName": "architecture.pdf",
+  "contentType": "application/pdf",
+  "fileSizeBytes": 2048
+}
+```
+
+The API validates required titles and field lengths, returns `201 Created` with a Location header after creation, `204 No Content` after deletion, and RFC 9457-style problem details for validation and not-found errors.
+
+Database schema is managed by Flyway migrations under `src/main/resources/db/migration`. Tests use an H2 in-memory database and run the same migration before Hibernate validates the schema.
+
 ## Planned, not yet implemented
 
 Document metadata CRUD, file upload/download, version history, authentication, role-based access control, audit events, notifications, search, reporting and production deployment hardening are future milestones. They are not claimed as complete in this scaffold.
