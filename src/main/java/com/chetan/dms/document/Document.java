@@ -84,6 +84,6 @@ public class Document {
     public String getFileName() { return fileName; }
     public String getContentType() { return contentType; }
     public Long getFileSizeBytes() { return fileSizeBytes; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
 }
