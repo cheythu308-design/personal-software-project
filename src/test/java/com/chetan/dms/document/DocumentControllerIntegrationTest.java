@@ -9,6 +9,9 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.chetan.dms.user.UserRepository;
+import com.chetan.dms.support.TestSecurity;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -32,9 +35,16 @@ class DocumentControllerIntegrationTest {
     @Autowired
     private DocumentRepository repository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @BeforeEach
     void cleanDatabase() {
         repository.deleteAll();
+        TestSecurity.ensureUser(userRepository, passwordEncoder);
     }
 
     @Test
@@ -49,7 +59,7 @@ class DocumentControllerIntegrationTest {
                 }
                 """;
 
-        String response = mockMvc.perform(post("/api/documents")
+        String response = mockMvc.perform(post("/api/documents").with(TestSecurity.user())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(createPayload))
                 .andExpect(status().isCreated())
@@ -60,12 +70,12 @@ class DocumentControllerIntegrationTest {
         JsonNode created = objectMapper.readTree(response);
         long id = created.get("id").asLong();
 
-        mockMvc.perform(get("/api/documents"))
+        mockMvc.perform(get("/api/documents").with(TestSecurity.user()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].id").value(id));
 
-        mockMvc.perform(get("/api/documents/{id}", id))
+        mockMvc.perform(get("/api/documents/{id}", id).with(TestSecurity.user()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Architecture Guide"));
 
@@ -79,14 +89,14 @@ class DocumentControllerIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(put("/api/documents/{id}", id)
+        mockMvc.perform(put("/api/documents/{id}", id).with(TestSecurity.user())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(updatePayload))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Updated Architecture Guide"))
                 .andExpect(jsonPath("$.fileSizeBytes").value(4096));
 
-        mockMvc.perform(delete("/api/documents/{id}", id))
+        mockMvc.perform(delete("/api/documents/{id}", id).with(TestSecurity.user()))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/documents/{id}", id))
@@ -111,7 +121,7 @@ class DocumentControllerIntegrationTest {
 
     @Test
     void returnsNotFoundForUnknownDocument() throws Exception {
-        mockMvc.perform(get("/api/documents/{id}", 999999L))
+        mockMvc.perform(get("/api/documents/{id}", 999999L).with(TestSecurity.user()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Document not found"));
     }
