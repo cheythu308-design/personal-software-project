@@ -1,6 +1,8 @@
 package com.chetan.dms.config;
 
 import com.chetan.dms.document.DocumentNotFoundException;
+import com.chetan.dms.auth.EmailAlreadyRegisteredException;
+import org.springframework.security.authentication.BadCredentialsException;
 import com.chetan.dms.document.DocumentFileNotFoundException;
 import com.chetan.dms.storage.FileStorageException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -16,6 +18,22 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
+
+
+    @ExceptionHandler(EmailAlreadyRegisteredException.class)
+    public ResponseEntity<ProblemDetail> handleDuplicateEmail(EmailAlreadyRegisteredException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, exception.getMessage());
+        problem.setTitle("Email already registered");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleBadCredentials(BadCredentialsException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.UNAUTHORIZED, "The email or password is incorrect.");
+        problem.setTitle("Authentication failed");
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
+    }
 
     @ExceptionHandler(DocumentNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleNotFound(DocumentNotFoundException exception) {
