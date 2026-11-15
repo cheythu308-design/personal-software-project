@@ -21,7 +21,8 @@ The document API supports metadata CRUD and binary file upload/download. Metadat
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | `/api/documents` | Create document metadata |\n| POST | `/api/documents/upload` | Upload a binary file and create its metadata |
+| POST | `/api/documents` | Create document metadata |
+| POST | `/api/documents/upload` | Upload a binary file and create its metadata |
 | GET | `/api/documents` | List documents, newest first |
 | GET | `/api/documents/{id}` | Retrieve one document |
 | PUT | `/api/documents/{id}` | Replace document metadata |
@@ -121,7 +122,7 @@ See `.env.example` for variable names. Export real values in your local shell or
 
 1. Foundation, build pipeline and health endpoint.
 2. Document metadata model, persistence and CRUD APIs.
-3. File storage abstraction, upload/download and validation.
+3. File storage abstraction, upload/download and validation — implemented.
 4. Authentication, authorization and user management.
 5. Audit trail, notifications and search.
 6. Integration tests, observability and deployment hardening.
