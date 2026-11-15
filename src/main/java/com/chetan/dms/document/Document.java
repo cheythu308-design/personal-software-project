@@ -38,6 +38,9 @@ public class Document {
     @Column(name = "file_size_bytes")
     private Long fileSizeBytes;
 
+    @Column(name = "storage_key", length = 100, unique = true)
+    private String storageKey;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -68,6 +71,15 @@ public class Document {
     void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    public void attachFile(String fileName, String contentType, Long fileSizeBytes, String storageKey) {
+        this.fileName = fileName;
+        this.contentType = contentType;
+        this.fileSizeBytes = fileSizeBytes;
+        this.storageKey = storageKey;
+    }
+
+    public String getStorageKey() { return storageKey; }
 
     public void update(String title, String description, String fileName,
                        String contentType, Long fileSizeBytes) {
