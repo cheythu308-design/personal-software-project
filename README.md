@@ -26,7 +26,8 @@ The document API supports metadata CRUD and binary file upload/download. Metadat
 | GET | `/api/documents` | List documents, newest first |
 | GET | `/api/documents/{id}` | Retrieve one document |
 | PUT | `/api/documents/{id}` | Replace document metadata |
-| GET | `/api/documents/{id}/file` | Download the stored binary file |\n| DELETE | `/api/documents/{id}` | Delete document metadata and its stored file |
+| GET | `/api/documents/{id}/file` | Download the stored binary file |
+| DELETE | `/api/documents/{id}` | Delete document metadata and its stored file |
 
 Example request:
 
