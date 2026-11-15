@@ -1,6 +1,6 @@
 package com.chetan.dms.document;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record DocumentResponse(
         Long id,
@@ -9,8 +9,8 @@ public record DocumentResponse(
         String fileName,
         String contentType,
         Long fileSizeBytes,
-        Instant createdAt,
-        Instant updatedAt
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
 ) {
     public static DocumentResponse from(Document document) {
         return new DocumentResponse(
