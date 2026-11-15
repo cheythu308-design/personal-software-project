@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
+import java.nio.charset.StandardCharsets;
+import org.springframework.security.authentication.BadCredentialsException;
 
 @Service
 @Transactional
@@ -31,6 +33,9 @@ public class AuthService {
 
     public AuthResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.email());
+        if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalArgumentException("Password must not exceed 72 UTF-8 bytes.");
+        }
         if (userRepository.existsByEmail(email)) {
             throw new EmailAlreadyRegisteredException(email);
         }
@@ -41,6 +46,9 @@ public class AuthService {
 
     public AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
+        if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) {
+            throw new BadCredentialsException("Invalid credentials.");
+        }
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(email, request.password()));
         UserAccount user = userRepository.findByEmail(authentication.getName())
