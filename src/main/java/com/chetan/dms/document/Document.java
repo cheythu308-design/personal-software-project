@@ -66,7 +66,7 @@ public class Document {
 
     @PreUpdate
     void onUpdate() {
-        updatedAt = Instant.now();
+        updatedAt = LocalDateTime.now();
     }
 
     public void update(String title, String description, String fileName,
