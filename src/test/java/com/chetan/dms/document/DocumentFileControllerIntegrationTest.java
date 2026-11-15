@@ -57,10 +57,11 @@ class DocumentFileControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "project-notes.txt", MediaType.TEXT_PLAIN_VALUE, fileBytes);
 
-        String response = mockMvc.perform(multipart("/api/documents/upload").with(TestSecurity.user())
+        String response = mockMvc.perform(multipart("/api/documents/upload")
                         .file(file)
                         .param("title", "Project Notes")
-                        .param("description", "Milestone two test document"))
+                        .param("description", "Milestone two test document")
+                        .with(TestSecurity.user()))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.title").value("Project Notes"))
                 .andExpect(jsonPath("$.fileName").value("project-notes.txt"))
@@ -107,7 +108,7 @@ class DocumentFileControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "delete-me.txt", MediaType.TEXT_PLAIN_VALUE, "temporary".getBytes());
 
-        String response = mockMvc.perform(multipart("/api/documents/upload").file(file))
+        String response = mockMvc.perform(multipart("/api/documents/upload").file(file).with(TestSecurity.user()))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
         long id = objectMapper.readTree(response).get("id").asLong();
@@ -115,7 +116,7 @@ class DocumentFileControllerIntegrationTest {
         mockMvc.perform(delete("/api/documents/{id}", id).with(TestSecurity.user()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/documents/{id}/file", id))
+        mockMvc.perform(get("/api/documents/{id}/file", id).with(TestSecurity.user()))
                 .andExpect(status().isNotFound());
     }
 }
