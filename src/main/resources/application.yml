@@ -8,6 +8,8 @@ spring:
     url: ${DB_URL:jdbc:mysql://localhost:3306/document_management?createDatabaseIfNotExist=true}
     username: ${DB_USERNAME:dms_user}
     password: ${DB_PASSWORD:dms_local_password}
+  flyway:
+    enabled: true
   jpa:
     hibernate:
       ddl-auto: validate
