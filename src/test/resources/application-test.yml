@@ -10,3 +10,8 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
   main:
     allow-bean-definition-overriding: true
+
+dms:
+  storage:
+    location: ./target/test-document-storage
+    max-file-size: 10485760
