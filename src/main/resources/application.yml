@@ -36,8 +36,6 @@ dms:
   storage:
     location: ${DMS_STORAGE_LOCATION:./data/documents}
     max-file-size: ${DMS_MAX_FILE_SIZE:10485760}
-
-dms:
   security:
     jwt:
       secret: ${DMS_JWT_SECRET:}
