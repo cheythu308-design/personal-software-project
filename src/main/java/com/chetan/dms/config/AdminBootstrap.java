@@ -33,8 +33,9 @@ public class AdminBootstrap implements CommandLineRunner {
         if (email.isBlank() && password.isBlank()) {
             return;
         }
-        if (email.isBlank() || password.length() < 12) {
-            throw new IllegalStateException("Set both bootstrap admin email and a password of at least 12 characters.");
+        if (email.isBlank() || password.length() < 12
+                || password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new IllegalStateException("Set both bootstrap admin email and a password of 12–72 UTF-8 bytes.");
         }
         if (!userRepository.existsByEmail(email)) {
             userRepository.save(new UserAccount(email, displayName,
