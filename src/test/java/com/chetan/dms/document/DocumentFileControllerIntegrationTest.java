@@ -10,6 +10,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import com.chetan.dms.user.UserAccount;
+import com.chetan.dms.user.UserRepository;
+import com.chetan.dms.support.TestSecurity;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -35,9 +39,16 @@ class DocumentFileControllerIntegrationTest {
     @Autowired
     private DocumentRepository repository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @BeforeEach
     void cleanDatabase() {
         repository.deleteAll();
+        TestSecurity.ensureUser(userRepository, passwordEncoder);
     }
 
     @Test
@@ -46,7 +57,7 @@ class DocumentFileControllerIntegrationTest {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "project-notes.txt", MediaType.TEXT_PLAIN_VALUE, fileBytes);
 
-        String response = mockMvc.perform(multipart("/api/documents/upload")
+        String response = mockMvc.perform(multipart("/api/documents/upload").with(TestSecurity.user())
                         .file(file)
                         .param("title", "Project Notes")
                         .param("description", "Milestone two test document"))
@@ -60,7 +71,7 @@ class DocumentFileControllerIntegrationTest {
         JsonNode created = objectMapper.readTree(response);
         long id = created.get("id").asLong();
 
-        byte[] downloaded = mockMvc.perform(get("/api/documents/{id}/file", id))
+        byte[] downloaded = mockMvc.perform(get("/api/documents/{id}/file", id).with(TestSecurity.user()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.TEXT_PLAIN))
                 .andExpect(header().string("Content-Disposition",
@@ -75,17 +86,18 @@ class DocumentFileControllerIntegrationTest {
         MockMultipartFile emptyFile = new MockMultipartFile(
                 "file", "empty.txt", MediaType.TEXT_PLAIN_VALUE, new byte[0]);
 
-        mockMvc.perform(multipart("/api/documents/upload").file(emptyFile))
+        mockMvc.perform(multipart("/api/documents/upload").file(emptyFile).with(TestSecurity.user()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.title").value("Invalid request"));
     }
 
     @Test
     void returnsNotFoundWhenDocumentHasNoUploadedFile() throws Exception {
-        Document saved = repository.save(new Document(
-                "Metadata only", "No binary attached", null, null, null));
+        Document saved = new Document("Metadata only", "No binary attached", null, null, null);
+        saved.assignOwner(userRepository.findByEmail(TestSecurity.USER_EMAIL).orElseThrow());
+        saved = repository.save(saved);
 
-        mockMvc.perform(get("/api/documents/{id}/file", saved.getId()))
+        mockMvc.perform(get("/api/documents/{id}/file", saved.getId()).with(TestSecurity.user()))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Document file not found"));
     }
@@ -100,7 +112,7 @@ class DocumentFileControllerIntegrationTest {
                 .andReturn().getResponse().getContentAsString();
         long id = objectMapper.readTree(response).get("id").asLong();
 
-        mockMvc.perform(delete("/api/documents/{id}", id))
+        mockMvc.perform(delete("/api/documents/{id}", id).with(TestSecurity.user()))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/documents/{id}/file", id))
