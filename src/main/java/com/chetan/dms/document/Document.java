@@ -9,7 +9,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 /**
  * Stores document metadata. Binary file content is deliberately kept outside
@@ -39,10 +39,10 @@ public class Document {
     private Long fileSizeBytes;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
+    private LocalDateTime createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
+    private LocalDateTime updatedAt;
 
     protected Document() {
         // Required by JPA.
@@ -59,7 +59,7 @@ public class Document {
 
     @PrePersist
     void onCreate() {
-        Instant now = Instant.now();
+        LocalDateTime now = LocalDateTime.now();
         createdAt = now;
         updatedAt = now;
     }
