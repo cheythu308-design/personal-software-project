@@ -3,6 +3,7 @@ package com.chetan.dms.config;
 import com.chetan.dms.document.DocumentNotFoundException;
 import com.chetan.dms.auth.EmailAlreadyRegisteredException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.access.AccessDeniedException;
 import com.chetan.dms.document.DocumentFileNotFoundException;
 import com.chetan.dms.storage.FileStorageException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
@@ -19,6 +20,15 @@ import java.util.Map;
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
+
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ProblemDetail> handleAccessDenied(AccessDeniedException exception) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+                HttpStatus.FORBIDDEN, "You do not have permission to perform this action.");
+        problem.setTitle("Access denied");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
 
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
     public ResponseEntity<ProblemDetail> handleDuplicateEmail(EmailAlreadyRegisteredException exception) {
