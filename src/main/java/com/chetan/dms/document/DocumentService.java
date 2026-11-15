@@ -2,6 +2,10 @@ package com.chetan.dms.document;
 
 import com.chetan.dms.storage.FileStorageService;
 import com.chetan.dms.storage.FileStorageException;
+import com.chetan.dms.user.UserAccount;
+import com.chetan.dms.user.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Sort;
@@ -20,12 +24,15 @@ public class DocumentService {
     private final DocumentRepository repository;
     private final FileStorageService fileStorageService;
     private final long maxFileSizeBytes;
+    private final UserRepository userRepository;
 
     public DocumentService(DocumentRepository repository,
                            FileStorageService fileStorageService,
+                           UserRepository userRepository,
                            @Value("${dms.storage.max-file-size:10485760}") long maxFileSizeBytes) {
         this.repository = repository;
         this.fileStorageService = fileStorageService;
+        this.userRepository = userRepository;
         this.maxFileSizeBytes = maxFileSizeBytes;
     }
 
@@ -37,15 +44,18 @@ public class DocumentService {
                 request.contentType(),
                 request.fileSizeBytes()
         );
+        document.assignOwner(currentUser());
         return DocumentResponse.from(repository.save(document));
     }
 
     @Transactional(readOnly = true)
     public List<DocumentResponse> findAll() {
-        return repository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
-                .stream()
-                .map(DocumentResponse::from)
-                .toList();
+        if (isAdmin()) {
+            return repository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
+                    .stream().map(DocumentResponse::from).toList();
+        }
+        return repository.findAllByOwnerIdOrderByCreatedAtDesc(currentUser().getId())
+                .stream().map(DocumentResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +108,7 @@ public class DocumentService {
         try {
             Document document = new Document(resolvedTitle, description, null, null, null);
             document.attachFile(safeFilename, contentType, file.getSize(), storageKey);
+            document.assignOwner(currentUser());
             return DocumentResponse.from(repository.save(document));
         } catch (RuntimeException exception) {
             fileStorageService.delete(storageKey);
@@ -123,6 +134,28 @@ public class DocumentService {
     }
 
     private Document getDocument(Long id) {
-        return repository.findById(id).orElseThrow(() -> new DocumentNotFoundException(id));
+        Document document = repository.findById(id).orElseThrow(() -> new DocumentNotFoundException(id));
+        if (!isAdmin() && (document.getOwner() == null
+                || !document.getOwner().getId().equals(currentUser().getId()))) {
+            // Do not reveal whether another user's document exists.
+            throw new DocumentNotFoundException(id);
+        }
+        return document;
+    }
+
+    private UserAccount currentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new org.springframework.security.access.AccessDeniedException("Authentication is required.");
+        }
+        return userRepository.findByEmail(authentication.getName())
+                .orElseThrow(() -> new org.springframework.security.access.AccessDeniedException(
+                        "The authenticated account no longer exists."));
+    }
+
+    private boolean isAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
     }
 }
