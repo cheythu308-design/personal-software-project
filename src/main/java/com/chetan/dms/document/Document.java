@@ -8,6 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import com.chetan.dms.user.UserAccount;
 
 import java.time.LocalDateTime;
 
@@ -40,6 +44,10 @@ public class Document {
 
     @Column(name = "storage_key", length = 100, unique = true)
     private String storageKey;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private UserAccount owner;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -80,6 +88,8 @@ public class Document {
     }
 
     public String getStorageKey() { return storageKey; }
+    public UserAccount getOwner() { return owner; }
+    public void assignOwner(UserAccount owner) { this.owner = owner; }
 
     public void update(String title, String description, String fileName,
                        String contentType, Long fileSizeBytes) {
