@@ -99,7 +99,7 @@ class DocumentControllerIntegrationTest {
         mockMvc.perform(delete("/api/documents/{id}", id).with(TestSecurity.user()))
                 .andExpect(status().isNoContent());
 
-        mockMvc.perform(get("/api/documents/{id}", id))
+        mockMvc.perform(get("/api/documents/{id}", id).with(TestSecurity.user()))
                 .andExpect(status().isNotFound());
     }
 
@@ -112,7 +112,7 @@ class DocumentControllerIntegrationTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/documents")
+        mockMvc.perform(post("/api/documents").with(TestSecurity.user())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest())
