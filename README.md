@@ -1,6 +1,6 @@
 # Document Management System
 
-An AI-assisted, learning-oriented Java 17 / Spring Boot application scaffold. The code is being developed in small, reviewable milestones with tests and documentation.
+An AI-assisted, learning-oriented Java 17 / Spring Boot 3.5 application scaffold. The code is being developed in small, reviewable milestones with tests and documentation.
 
 ## Implemented in this foundation milestone
 
