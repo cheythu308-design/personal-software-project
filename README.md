@@ -17,7 +17,7 @@ An AI-assisted, learning-oriented Java 17 / Spring Boot 3.5 application scaffold
 
 ## Document metadata API
 
-The document API supports metadata CRUD and binary file upload/download. Metadata is stored in MySQL; binary files are stored outside the database through a filesystem storage component.
+The document API supports metadata CRUD and binary file upload/download. Metadata is stored in MySQL; binary files are stored outside the database through a filesystem storage component. Authentication uses Spring Security and stateless JWT bearer tokens; each regular user can access only documents they own.
 
 | Method | Endpoint | Purpose |
 |---|---|---|
@@ -28,6 +28,10 @@ The document API supports metadata CRUD and binary file upload/download. Metadat
 | PUT | `/api/documents/{id}` | Replace document metadata |
 | GET | `/api/documents/{id}/file` | Download the stored binary file |
 | DELETE | `/api/documents/{id}` | Delete document metadata and its stored file |
+| POST | `/api/auth/register` | Register a USER account and receive a JWT |
+| POST | `/api/auth/login` | Authenticate and receive a JWT |
+| GET | `/api/auth/me` | Return the authenticated account |
+| GET | `/api/admin/users` | ADMIN-only user directory |
 
 Example request:
 
@@ -79,9 +83,51 @@ curl -L http://localhost:8080/api/documents/1/file -o downloaded-file.pdf
 
 This milestone uses local filesystem storage for development. For multi-instance production deployments, use a shared object store such as Amazon S3 or an equivalent service and configure access controls, malware scanning and retention policies.
 
+## Authentication and authorization
+
+- Registration: `POST /api/auth/register` with `email`, `displayName` and a password of 12–72 characters. New accounts always receive the `USER` role.
+- Login: `POST /api/auth/login` with `email` and `password`.
+- Both endpoints return a signed JWT access token. Send it on protected requests as `Authorization: Bearer <token>`.
+- `GET /api/auth/me` returns the current account.
+- `USER` accounts can list, read, update, download and delete only their own documents. Other users' documents return 404 to avoid disclosing their existence.
+- `ADMIN` accounts can access all documents and `GET /api/admin/users`.
+- Passwords are stored using BCrypt. JWT signing uses HS256 and a configurable expiry (one hour by default).
+- Public routes: registration, login, health, actuator health and OpenAPI documentation. All other routes require a valid bearer token.
+
+### Configure the JWT secret
+
+Set `DMS_JWT_SECRET` to a Base64-encoded random value containing at least 32 bytes. For example, generate one locally with:
+
+```bash
+openssl rand -base64 48
+```
+
+Do not use the automated-test key in a deployed environment. The application intentionally refuses to start without a deployment JWT secret.
+
+### Optional first administrator
+
+Set both `DMS_ADMIN_EMAIL` and `DMS_ADMIN_PASSWORD` (minimum 12 characters) before starting the application. The bootstrap creates an `ADMIN` account only if that email does not already exist. Public registration cannot create administrators. Keep the bootstrap password in a secret manager and unset it after initial provisioning.
+
+### Register and authenticate
+
+```bash
+curl -X POST http://localhost:8080/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","displayName":"Example User","password":"change-this-password"}'
+```
+
+Use the returned access token:
+
+```bash
+curl http://localhost:8080/api/documents \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Migration V3 creates the `users` table and adds nullable `documents.owner_id`. Existing documents created before this migration have no owner; they are visible only to administrators until ownership is assigned through an administrative data migration.
+
 ## Planned, not yet implemented
 
-File version history, authentication, role-based access control, audit events, notifications, search, reporting and production deployment hardening remain future milestones. They are not claimed as complete in this scaffold.
+File version history, audit events, notifications, advanced search, reporting, refresh-token rotation, account recovery, malware scanning and production deployment hardening remain future milestones. They are not claimed as complete in this scaffold.
 
 ## Requirements
 
@@ -124,7 +170,7 @@ See `.env.example` for variable names. Export real values in your local shell or
 1. Foundation, build pipeline and health endpoint.
 2. Document metadata model, persistence and CRUD APIs.
 3. File storage abstraction, upload/download and validation — implemented.
-4. Authentication, authorization and user management.
+4. Authentication, authorization and user management — implemented with JWT, BCrypt, USER/ADMIN roles and per-user document ownership.
 5. Audit trail, notifications and search.
 6. Integration tests, observability and deployment hardening.
 
