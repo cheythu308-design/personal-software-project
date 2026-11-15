@@ -3,10 +3,9 @@ package com.chetan.dms.config;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.env.Environment;
+import java.nio.charset.StandardCharsets;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -26,12 +25,25 @@ import java.util.Base64;
 public class SecurityConfig {
 
     @Bean
-    SecretKey jwtSecretKey(@Value("${dms.security.jwt.secret}") String secret) {
-        byte[] decoded = Base64.getDecoder().decode(secret);
-        if (decoded.length < 32) {
+    SecretKey jwtSecretKey(@Value("${dms.security.jwt.secret:}") String secret, Environment environment) {
+        byte[] keyBytes;
+        if (secret == null || secret.isBlank()) {
+            boolean testProfile = java.util.Arrays.asList(environment.getActiveProfiles()).contains("test");
+            if (!testProfile) {
+                throw new IllegalStateException("Set DMS_JWT_SECRET to a Base64-encoded random key of at least 32 bytes.");
+            }
+            keyBytes = "automated-test-key-material-not-for-deployment".getBytes(StandardCharsets.UTF_8);
+        } else {
+            try {
+                keyBytes = Base64.getDecoder().decode(secret);
+            } catch (IllegalArgumentException exception) {
+                throw new IllegalStateException("DMS_JWT_SECRET must be Base64 encoded.", exception);
+            }
+        }
+        if (keyBytes.length < 32) {
             throw new IllegalStateException("DMS JWT secret must decode to at least 32 bytes.");
         }
-        return new SecretKeySpec(decoded, "HmacSHA256");
+        return new SecretKeySpec(keyBytes, "HmacSHA256");
     }
 
     @Bean
