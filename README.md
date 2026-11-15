@@ -85,7 +85,7 @@ This milestone uses local filesystem storage for development. For multi-instance
 
 ## Authentication and authorization
 
-- Registration: `POST /api/auth/register` with `email`, `displayName` and a password of 12–72 characters. New accounts always receive the `USER` role.
+- Registration: `POST /api/auth/register` with `email`, `displayName` and a password of 12–72 UTF-8 bytes. New accounts always receive the `USER` role.
 - Login: `POST /api/auth/login` with `email` and `password`.
 - Both endpoints return a signed JWT access token. Send it on protected requests as `Authorization: Bearer <token>`.
 - `GET /api/auth/me` returns the current account.
@@ -167,12 +167,12 @@ See `.env.example` for variable names. Export real values in your local shell or
 
 ## Development milestones
 
-1. Foundation, build pipeline and health endpoint.
-2. Document metadata model, persistence and CRUD APIs.
-3. File storage abstraction, upload/download and validation — implemented.
-4. Authentication, authorization and user management — implemented with JWT, BCrypt, USER/ADMIN roles and per-user document ownership.
-5. Audit trail, notifications and search.
-6. Integration tests, observability and deployment hardening.
+1. Foundation, build pipeline and health endpoint — implemented.
+2. Document metadata, persistence, CRUD and binary file transfer — implemented.
+3. Authentication and authorization — implemented with JWT, BCrypt, USER/ADMIN roles and per-user document ownership.
+4. Audit trail, notifications and advanced search.
+5. File versioning, reporting and operational workflows.
+6. Production deployment hardening, observability and security review.
 
 Implement, test, review and document each feature as it is actually developed.
 
