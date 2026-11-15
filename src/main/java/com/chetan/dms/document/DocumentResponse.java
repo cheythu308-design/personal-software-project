@@ -10,7 +10,9 @@ public record DocumentResponse(
         String contentType,
         Long fileSizeBytes,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        boolean fileAvailable,
+        String downloadUrl
 ) {
     public static DocumentResponse from(Document document) {
         return new DocumentResponse(
@@ -21,7 +23,9 @@ public record DocumentResponse(
                 document.getContentType(),
                 document.getFileSizeBytes(),
                 document.getCreatedAt(),
-                document.getUpdatedAt()
+                document.getUpdatedAt(),
+                document.getStorageKey() != null,
+                document.getStorageKey() != null ? "/api/documents/" + document.getId() + "/file" : null
         );
     }
 }
