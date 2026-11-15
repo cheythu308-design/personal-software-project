@@ -1,0 +1,7 @@
+package com.chetan.dms.document;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface DocumentRepository extends JpaRepository<Document, Long> {
+    java.util.List<Document> findAllByOwnerIdOrderByCreatedAtDesc(Long ownerId);
+}
