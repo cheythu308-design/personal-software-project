@@ -15,3 +15,4 @@ storage/
 *.pem
 *.key
 secrets/
+data/
