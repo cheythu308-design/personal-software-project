@@ -98,6 +98,68 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Email already registered"));
     }
 
+
+    @Test
+    void usersCanOnlyAccessTheirOwnDocuments() throws Exception {
+        String emailA = "owner-" + UUID.randomUUID() + "@example.test";
+        String emailB = "other-" + UUID.randomUUID() + "@example.test";
+        String password = "strong-password-123";
+
+        String tokenA = registerAndGetToken(emailA, "Owner A", password);
+        String tokenB = registerAndGetToken(emailB, "Owner B", password);
+
+        String document = """
+                {"title":"Private document","description":"Only its owner can see this"}
+                """;
+        String created = mockMvc.perform(post("/api/documents")
+                        .header("Authorization", "Bearer " + tokenA)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(document))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long documentId = objectMapper.readTree(created).get("id").asLong();
+
+        mockMvc.perform(get("/api/documents")
+                        .header("Authorization", "Bearer " + tokenA))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1));
+
+        mockMvc.perform(get("/api/documents")
+                        .header("Authorization", "Bearer " + tokenB))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        mockMvc.perform(get("/api/documents/{id}", documentId)
+                        .header("Authorization", "Bearer " + tokenB))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void regularUsersCannotAccessAdminEndpoints() throws Exception {
+        String email = "regular-" + UUID.randomUUID() + "@example.test";
+        String token = registerAndGetToken(email, "Regular User", "strong-password-123");
+
+        mockMvc.perform(get("/api/admin/users")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isForbidden());
+    }
+
+    private String registerAndGetToken(String email, String displayName, String password) throws Exception {
+        String request = """
+                {
+                  "email": "%s",
+                  "displayName": "%s",
+                  "password": "%s"
+                }
+                """.formatted(email, displayName, password);
+        String response = mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(request))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(response).get("accessToken").asText();
+    }
+
     @Test
     void rejectsWeakRegistrationPassword() throws Exception {
         String request = """
