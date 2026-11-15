@@ -17,7 +17,7 @@ An AI-assisted, learning-oriented Java 17 / Spring Boot 3.5 application scaffold
 
 ## Document metadata API
 
-The first domain milestone implements metadata CRUD at `/api/documents`. It does not upload or download binary files yet; file fields are descriptive metadata only.
+The document API supports metadata CRUD and binary file upload/download. Metadata is stored in MySQL; binary files are stored outside the database through a filesystem storage component.
 
 | Method | Endpoint | Purpose |
 |---|---|---|
@@ -43,9 +43,43 @@ The API validates required titles and field lengths, returns `201 Created` with 
 
 Database schema is managed by Flyway migrations under `src/main/resources/db/migration`. Tests use an H2 in-memory database and run the same migration before Hibernate validates the schema.
 
+
+### File upload and download
+
+- `POST /api/documents/upload` — multipart upload; required part: `file`; optional fields: `title` and `description`.
+- `GET /api/documents/{id}/file` — download the original file as an attachment.
+- `GET /api/documents/{id}` and `GET /api/documents` return `fileAvailable` and `downloadUrl`.
+- `DELETE /api/documents/{id}` deletes both the metadata record and its stored file.
+- Empty files are rejected. The default maximum upload size is 10 MiB.
+- The original filename is retained as metadata; the physical file is saved with a generated UUID-based storage key to prevent path traversal and filename collisions.
+
+Example upload with curl:
+
+```bash
+curl -X POST http://localhost:8080/api/documents/upload \
+  -F "file=@./sample.pdf" \
+  -F "title=Sample PDF" \
+  -F "description=Example document"
+```
+
+Download:
+
+```bash
+curl -L http://localhost:8080/api/documents/1/file -o downloaded-file.pdf
+```
+
+### File storage configuration
+
+- `DMS_STORAGE_LOCATION` — local directory for binary files; defaults to `./data/documents`.
+- `DMS_MAX_FILE_SIZE` — maximum file size in bytes; defaults to `10485760` (10 MiB).
+- Multipart request limits are configured in `src/main/resources/application.yml`.
+- Local binary data under `data/` is excluded from Git. Back up this directory separately from the MySQL database.
+
+This milestone uses local filesystem storage for development. For multi-instance production deployments, use a shared object store such as Amazon S3 or an equivalent service and configure access controls, malware scanning and retention policies.
+
 ## Planned, not yet implemented
 
-Document metadata CRUD, file upload/download, version history, authentication, role-based access control, audit events, notifications, search, reporting and production deployment hardening are future milestones. They are not claimed as complete in this scaffold.
+File version history, authentication, role-based access control, audit events, notifications, search, reporting and production deployment hardening remain future milestones. They are not claimed as complete in this scaffold.
 
 ## Requirements
 
