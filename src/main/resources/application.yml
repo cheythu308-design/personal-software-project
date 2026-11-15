@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: document-management-system
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/document_management?createDatabaseIfNotExist=true}
     username: ${DB_USERNAME:dms_user}
@@ -27,3 +31,8 @@ management:
     health:
       probes:
         enabled: true
+
+dms:
+  storage:
+    location: ${DMS_STORAGE_LOCATION:./data/documents}
+    max-file-size: ${DMS_MAX_FILE_SIZE:10485760}
