@@ -21,11 +21,11 @@ The document API supports metadata CRUD and binary file upload/download. Metadat
 
 | Method | Endpoint | Purpose |
 |---|---|---|
-| POST | `/api/documents` | Create document metadata |
+| POST | `/api/documents` | Create document metadata |\n| POST | `/api/documents/upload` | Upload a binary file and create its metadata |
 | GET | `/api/documents` | List documents, newest first |
 | GET | `/api/documents/{id}` | Retrieve one document |
 | PUT | `/api/documents/{id}` | Replace document metadata |
-| DELETE | `/api/documents/{id}` | Delete document metadata |
+| GET | `/api/documents/{id}/file` | Download the stored binary file |\n| DELETE | `/api/documents/{id}` | Delete document metadata and its stored file |
 
 Example request:
 
